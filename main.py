@@ -73,31 +73,22 @@ routes.drop(['Destination_airport', 'Airport ID', 'Name', 'Country', 'Latitude',
 routes['Source_airport_name'] = [i.split(' Airport')[0] for i in routes['Source_airport_name'].tolist()]
 routes['Destination_airport_name'] = [i.split(' Airport')[0] for i in routes['Destination_airport_name'].tolist()]
 
-# df_airports = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv')
-# df_airports.head()
-#
-# df_flight_paths = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/2011_february_aa_flight_paths.csv')
-# df_flight_paths.head()
-
 elements_list = []
-# nodes = create_nodes(routes,['Indira Gandhi International'])
-# edges = create_edges(routes, ['Indira Gandhi International'])
-# elements_list.extend(nodes)
-# elements_list.extend(edges)
 
 style_list = [
     {'selector':'node',
     'style':{
         'content':'data(label)',
-        'background-color':'#808080',
-        'font-size':'3px',
+        'background-color':'#dcdcdc',
+        'border-color':'black',
+        'border-width':'0.1px',
+        'font-size':'1.2px',
         'font-family':'system-ui',
         'opacity':0.9,
-        'width':'0.01px',
-        'height':'0.01px',
-        'min-zoomed-font-size':'10px',
+        'width':'2px',
+        'height':'2px',
+        'min-zoomed-font-size':'5px',
         'text-wrap' : 'wrap',
-        'text-wrap-width' : '1px',
         'overlay-padding':'0.1',
         }
     },
@@ -105,7 +96,7 @@ style_list = [
     'style':{
         'width':'data(weight)',
         'target-arrow-color':'navy',
-        'target-arrow-shape':'circle',
+        'target-arrow-shape':'none',
         'curve-style':'bezier',
         'opacity':0.3,
         'line-color':'navy',
