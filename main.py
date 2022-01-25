@@ -1,4 +1,3 @@
-from turtle import color
 import dash
 from dash import html
 from dash import dcc
