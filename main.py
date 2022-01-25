@@ -82,12 +82,12 @@ style_list = [
         'background-color':'#dcdcdc',
         'border-color':'black',
         'border-width':'0.1px',
-        'font-size':'1.2px',
+        'font-size':'1.5px',
         'font-family':'system-ui',
         'opacity':0.9,
         'width':'2px',
         'height':'2px',
-        'min-zoomed-font-size':'5px',
+        'min-zoomed-font-size':'10px',
         'text-wrap' : 'wrap',
         'overlay-padding':'0.1',
         }
@@ -100,7 +100,7 @@ style_list = [
         'curve-style':'bezier',
         'opacity':0.3,
         'line-color':'navy',
-        'line-cap':'circle',
+        'line-cap':'round',
         'label':'data(label)',
         'text-rotation':'autorotate',
         'font-size':'3px'
