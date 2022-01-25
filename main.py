@@ -1,3 +1,4 @@
+from turtle import color
 import dash
 from dash import html
 from dash import dcc
@@ -108,8 +109,8 @@ style_list = [
     },
     {'selector':'[weight>=0.75]',
     'style':{
-        'line-color':'green',
-        'target-arrow-color':'green',
+        'line-color':'yellow',
+        'target-arrow-color':'yellow',
         'opacity':0.5
         }
     },
@@ -135,20 +136,26 @@ app.layout = html.Div([
                         value='India',
                         multi=False,
                         clearable=False,
-                        options=[{'label': name, 'value' : name} for name in unique_countires],style={'width': '90%'}),
+                        options=[{'label': name, 'value' : name} for name in unique_countires],
+                        style={'width': '90%'}),
                     'Airports:',
                     dcc.Dropdown(id='airport-dropdown', style={'width': '90%'})
                     ]),
-        cyto.Cytoscape(
-            id='cytoscape-plot',
-            layout={'name':'preset'},
-            elements=elements_list,
-            stylesheet=style_list,
-            style={
-                'width' : '100%',
-                'height' : str(90)+'vh',
-            }
-            )])
+    html.Div(['Edges in ',
+        html.Span('red ',style={'color': 'red'}),
+        ' represent 90 percentile traffic between source and destination. Edges in ',
+        html.Span('yellow', style={'color': 'yellow'}),
+        ' represent 75 percentile traffic between source and destination']),
+    cyto.Cytoscape(
+        id='cytoscape-plot',
+        layout={'name':'preset'},
+        elements=elements_list,
+        stylesheet=style_list,
+        style={
+            'width' : '100%',
+            'height' : str(90)+'vh',
+        }
+        )])
 
 @app.callback(Output('cytoscape-plot', 'elements'),
               [Input('airport-dropdown', 'value')])
