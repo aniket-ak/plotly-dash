@@ -6,49 +6,69 @@ import pandas as pd
 import dash_cytoscape as cyto
 from dash.dependencies import Input, Output
 
-def create_nodes(df, src):
+def create_nodes(df, src, region_view=True):
     nodes = []
     unique_nodes = []
 
-    airports_list = routes[df.Source_airport_name.isin(src)]
+    if region_view:
+        relevant_routes = df[df.Source_airport_name.isin(src)]
 
-    source_name = routes[routes['Source_airport_name'].isin(src)].iloc[0]['Source_airport_name']
-    source_ID = routes[routes['Source_airport_name'].isin(src)].iloc[0]['Source_airport_ID']
-    source_lat = routes[routes['Source_airport_name'].isin(src)].iloc[0]['Source_airport_latitude']
-    source_long = routes[routes['Source_airport_name'].isin(src)].iloc[0]['Source_airport_longitude']
+        source_name = df[df['Source_airport_name'].isin(src)].iloc[0]['Source_airport_name']
+        source_ID = df[df['Source_airport_name'].isin(src)].iloc[0]['Source_airport_ID']
+        source_lat = df[df['Source_airport_name'].isin(src)].iloc[0]['Source_airport_latitude']
+        source_long = df[df['Source_airport_name'].isin(src)].iloc[0]['Source_airport_longitude']
 
-    nodes.append({'data':
-                    {'id': str(source_name), 'label': source_name},
-                    'position': {'x': source_long*10, 'y': -source_lat*10}
-                })
-    i_airport = 0
+        nodes.append({'data':
+                        {'id': str(source_name), 'label': source_name},
+                        'position': {'x': source_long*10, 'y': -source_lat*10}
+                    })
 
-    for irow, row in airports_list.iterrows():
-        if row['Destination_airport_name'] not in unique_nodes:
-            nodes.append(
-                {'data': {'id' : str(row['Destination_airport_name']), 'label': row['Destination_airport_name'].replace(' ','\n')},
-                'position' : {'x': row['Destination_airport_longitude']*10, 'y': -row['Destination_airport_latitude']*10}
-                }
-            )
-            unique_nodes.append(row['Destination_airport_name'])
-            i_airport=i_airport + 1
+        for irow, row in relevant_routes.iterrows():
+            if row['Destination_airport_name'] not in unique_nodes:
+                nodes.append(
+                    {'data': {'id' : str(row['Destination_airport_name']), 'label': row['Destination_airport_name'].replace(' ','\n')},
+                    'position' : {'x': row['Destination_airport_longitude']*10, 'y': -row['Destination_airport_latitude']*10}
+                    }
+                )
+                unique_nodes.append(row['Destination_airport_name'])
+    else:
+        relevant_routes = df[df.Equipment.isin(src)]
+
+        for irow, row in relevant_routes.iterrows():
+            if (row['Destination_airport_name'] not in unique_nodes):
+                nodes.append(
+                    {'data': {'id' : str(row['Destination_airport_name']), 'label': row['Destination_airport_name'].replace(' ','\n')},
+                    'position' : {'x': row['Destination_airport_longitude']*10, 'y': -row['Destination_airport_latitude']*10}
+                    }
+                )
+                unique_nodes.append(row['Destination_airport_name'])
+            if (row['Source_airport_name'] not in unique_nodes):
+                nodes.append(
+                    {'data': {'id' : str(row['Source_airport_name']), 'label': row['Source_airport_name'].replace(' ','\n')},
+                    'position' : {'x': row['Source_airport_longitude']*10, 'y': -row['Source_airport_latitude']*10}
+                    }
+                )
+                unique_nodes.append(row['Source_airport_name'])
     return nodes
 
-def create_edges(df, source):
+def create_edges(df, source, region_view=True):
     edge_list = []
-    relevant_routes = routes[df.Source_airport_name.isin(source)]
+    if region_view:
+        relevant_routes = df[df.Source_airport_name.isin(source)]
+    else:
+        relevant_routes = df[df.Equipment.isin(source)]
     edge_df = relevant_routes.groupby(by=['Source_airport_name', 'Destination_airport_name']).size().reset_index(name='counts')
     edge_df['normalized_counts'] = edge_df['counts']/edge_df['counts'].abs().max()
     edge_list = [{'data': {'source': str(s), 'target': str(d), 'weight': c}
-                  } for s, d, c in zip(edge_df.Source_airport_name.tolist(), edge_df.Destination_airport_name.tolist(),
-                                       edge_df.normalized_counts.tolist())]
+                    } for s, d, c in zip(edge_df.Source_airport_name.tolist(), edge_df.Destination_airport_name.tolist(),
+                                        edge_df.normalized_counts.tolist())]
     return edge_list
 
 
 airports = pd.read_csv('airports.csv')
 routes = pd.read_csv('routes.csv')
 
-airports.drop(columns=['City', 'IATA', 'ICAO', 'Altitude', 'Timezone', 'DST', 'Tz database time zone', 'Type', 'Source'], axis=1, inplace=True)
+airports.drop(columns=['IATA', 'ICAO', 'Altitude', 'Timezone', 'DST', 'Tz database time zone', 'Type', 'Source'], axis=1, inplace=True)
 routes.drop(columns=['Airline_ID', 'Codeshare', 'Stops'], axis=1, inplace=True)
 
 routes = routes[pd.to_numeric(routes['Source_airport_ID'], errors='coerce').notnull()]
@@ -57,18 +77,20 @@ routes['Source_airport_ID'] = routes['Source_airport_ID'].astype(np.int64)
 routes['Destination_airport_ID'] = routes['Destination_airport_ID'].astype(np.int64)
 
 routes = routes.merge(airports, left_on='Source_airport_ID', right_on='Airport ID')
-routes['Source_airport_name'] = routes['Name']
+routes['Name'] = [i.split(' Airport')[0] for i in routes['Name'].tolist()]
+routes['Source_airport_name'] = routes['Name'] +' ('+ routes['City']+')'
 routes['Source_airport_country'] = routes['Country']
 routes['Source_airport_latitude'] = routes['Latitude']
 routes['Source_airport_longitude'] = routes['Longitude']
-routes.drop(['Source_airport', 'Airport ID', 'Name', 'Country', 'Latitude', 'Longitude'], axis=1, inplace=True)
+routes.drop(['Source_airport', 'Airport ID', 'Name', 'Country', 'Latitude', 'Longitude', 'City'], axis=1, inplace=True)
 
 routes = routes.merge(airports, left_on='Destination_airport_ID', right_on='Airport ID')
-routes['Destination_airport_name'] = routes['Name']
+routes['Name'] = [i.split(' Airport')[0] for i in routes['Name'].tolist()]
+routes['Destination_airport_name'] = routes['Name'] +' ('+ routes['City']+')'
 routes['Destination_airport_country'] = routes['Country']
 routes['Destination_airport_latitude'] = routes['Latitude']
 routes['Destination_airport_longitude'] = routes['Longitude']
-routes.drop(['Destination_airport', 'Airport ID', 'Name', 'Country', 'Latitude', 'Longitude'], axis=1, inplace=True)
+routes.drop(['Destination_airport', 'Airport ID', 'Name', 'Country', 'Latitude', 'Longitude', 'City'], axis=1, inplace=True)
 
 routes['Source_airport_name'] = [i.split(' Airport')[0] for i in routes['Source_airport_name'].tolist()]
 routes['Destination_airport_name'] = [i.split(' Airport')[0] for i in routes['Destination_airport_name'].tolist()]
@@ -87,7 +109,7 @@ style_list = [
         'opacity':0.9,
         'width':'2px',
         'height':'2px',
-        'min-zoomed-font-size':'10px',
+        'min-zoomed-font-size':'5px',
         'text-wrap' : 'wrap',
         'overlay-padding':'0.1',
         }
@@ -96,11 +118,13 @@ style_list = [
     'style':{
         'width':'data(weight)',
         'target-arrow-color':'navy',
-        'target-arrow-shape':'none',
+        'target-arrow-shape':'triangle',
+        'target-endpoint':'outside-to-node-or-label',
+        'arrow-scale':0.5,
         'curve-style':'bezier',
         'opacity':0.3,
         'line-color':'navy',
-        'line-cap':'round',
+        'line-cap':'butt',
         'label':'data(label)',
         'text-rotation':'autorotate',
         'font-size':'3px'
@@ -122,30 +146,80 @@ style_list = [
         }
     }]
 app = dash.Dash(__name__)
+app.config.suppress_callback_exceptions = True
 
 unique_countires = routes['Source_airport_country'].append(routes['Destination_airport_country']).unique().tolist()
 unique_countires.sort()
+unique_equipments = [str(i) for i in routes['Equipment'].unique().tolist()]
+unique_equipments.sort()
 
 app.layout = html.Div([
+    dcc.RadioItems(
+        id='selection',
+        options=[{'label':'Filter based on region', 'value':'region'},{'label':'Filter based on equipment', 'value':'equipment'}],
+        value='region',
+        style={'width': '40%','margin-left':'10px'}),
     html.Div(
-        style={'width': '80%', 'display':'flex'},
-        children = ['Country:',
+        id='dropdown',
+        style={'width': '95%', 'display':'flex','margin-left':'10px', 'padding':'15px'},
+        ),
+    html.Div(['Edges in ',
+        html.Span('red ',style={'color': 'red'}),
+        ' represent 90 percentile traffic between source and destination. Edges in ',
+        html.Span('yellow', style={'color': 'yellow'}),
+        ' represent 75 percentile traffic between source and destination'], style={'margin-left':'10px'}),
+    html.Hr(),
+    html.Div(id='region_plot',hidden=False),
+    html.Div(id='equipment_plot',children=[],hidden=True)
+    ])
+
+@app.callback(Output('dropdown', 'children'),
+              [Input('selection', 'value')])
+def choosePlotOption(selected_value):
+    if selected_value == 'region':
+        children = ['Source Country:',
                     dcc.Dropdown(
                         id='country-dropdown',
                         value='India',
                         multi=False,
                         clearable=False,
                         options=[{'label': name, 'value' : name} for name in unique_countires],
-                        style={'width': '90%'}),
-                    'Airports:',
-                    dcc.Dropdown(id='airport-dropdown', style={'width': '90%'})
-                    ]),
-    html.Div(['Edges in ',
-        html.Span('red ',style={'color': 'red'}),
-        ' represent 90 percentile traffic between source and destination. Edges in ',
-        html.Span('yellow', style={'color': 'yellow'}),
-        ' represent 75 percentile traffic between source and destination']),
-    cyto.Cytoscape(
+                        style={'width': '40%'}),
+                    'Source Airport:',
+                    dcc.Dropdown(id='airport-dropdown', style={'width': '40%'})
+                    ]
+    else:
+        children = ['Equipment:',
+                    dcc.Dropdown(
+                        id='equipment_dropdown',
+                        value=['777','ATR'],
+                        multi=True,
+                        clearable=False,
+                        options=[{'label': name, 'value' : name} for name in unique_equipments],
+                        style={'width': '40%'}
+                    )]
+    return children
+
+@app.callback(Output('airport-dropdown', 'options'),
+              [Input('country-dropdown', 'value')])
+def airports_options(value):
+    routes_in_country = routes[routes['Source_airport_country'].isin([value])]
+    unique_airports = routes_in_country['Source_airport_name'].unique().tolist()
+    unique_airports.sort()
+    return [{'label': name, 'value' : name} for name in unique_airports]
+
+@app.callback(Output('region_plot', 'children'),
+              [Input('airport-dropdown', 'value')])
+def displaySelectedNodeData(value):
+    src = [value]
+    elements_list = []
+    if value is not None:
+        nodes = create_nodes(routes,src,region_view=True)
+        edges = create_edges(routes,src)
+        elements_list.extend(nodes)
+        elements_list.extend(edges)
+
+    return cyto.Cytoscape(
         id='cytoscape-plot',
         layout={'name':'preset'},
         elements=elements_list,
@@ -154,27 +228,30 @@ app.layout = html.Div([
             'width' : '100%',
             'height' : str(90)+'vh',
         }
-        )])
+        )
 
-@app.callback(Output('cytoscape-plot', 'elements'),
-              [Input('airport-dropdown', 'value')])
+@app.callback([Output('equipment_plot', 'children'),
+               Output('region_plot', 'hidden'),
+               Output('equipment_plot', 'hidden')],
+              [Input('equipment_dropdown', 'value')])
 def displaySelectedNodeData(value):
-    src = [value]
     elements_list = []
     if value is not None:
-        nodes = create_nodes(routes,src)
-        edges = create_edges(routes, src)
+        nodes = create_nodes(routes,value,region_view=False)
+        edges = create_edges(routes, value, region_view=False)
         elements_list.extend(nodes)
         elements_list.extend(edges)
-    return elements_list
-
-@app.callback(Output('airport-dropdown', 'options'),
-              [Input('country-dropdown', 'value')])
-def airports_options(value):
-    routes1 = routes[routes['Source_airport_country'].isin([value])]
-    unique_airports = routes1['Source_airport_name'].unique().tolist()
-    unique_airports.sort()
-    return [{'label': name, 'value' : name} for name in unique_airports]
+   
+    return cyto.Cytoscape(
+        id='cytoscape-plot',
+        layout={'name':'preset'},
+        elements=elements_list,
+        stylesheet=style_list,
+        style={
+            'width' : '100%',
+            'height' : str(90)+'vh',
+        }
+        ), True, False
 
 if __name__ == '__main__':
     app.run_server(debug=True)
