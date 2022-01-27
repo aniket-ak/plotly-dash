@@ -1,9 +1,13 @@
 # Interactive Network Visualization using Airline Dataset
 
-Welcome! This repository uses dash application for interactive visualization of Airline dataset.
+Welcome! This repository uses dash application for interactive visualization of Airline dataset. Some sample visualizations are shown below.
 
+### Region Based Visualization
 #### Air traffic from Kempegowda International Airport
-![Alt Text](https://github.com/aniket-ak/plotly-dash/blob/eede6cd88e73ec69ad0bfdf89bb3c1cc2a10cc65/blr.gif)
+![Alt Text](https://github.com/aniket-ak/plotly-dash/blob/0ce5307da9b634f28e844912ae8eeb549b8a050d/Images/blr.gif)
 
 #### Air traffic from Washington Dulles International Airport
-![Alt Text](https://github.com/aniket-ak/plotly-dash/blob/eede6cd88e73ec69ad0bfdf89bb3c1cc2a10cc65/dulles.gif)
+![Alt Text](https://github.com/aniket-ak/plotly-dash/blob/0ce5307da9b634f28e844912ae8eeb549b8a050d/Images/dulles.gif)
+
+### Equipment Based Visualization
+![Alt Text](https://github.com/aniket-ak/plotly-dash/blob/0ce5307da9b634f28e844912ae8eeb549b8a050d/Images/equipment.gif)
