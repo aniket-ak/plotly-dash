@@ -92,9 +92,6 @@ routes['Destination_airport_latitude'] = routes['Latitude']
 routes['Destination_airport_longitude'] = routes['Longitude']
 routes.drop(['Destination_airport', 'Airport ID', 'Name', 'Country', 'Latitude', 'Longitude', 'City'], axis=1, inplace=True)
 
-routes['Source_airport_name'] = [i.split(' Airport')[0] for i in routes['Source_airport_name'].tolist()]
-routes['Destination_airport_name'] = [i.split(' Airport')[0] for i in routes['Destination_airport_name'].tolist()]
-
 elements_list = []
 
 style_list = [
