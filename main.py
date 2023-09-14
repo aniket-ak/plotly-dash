@@ -33,6 +33,7 @@ def create_nodes(df, src, region_view=True):
                 unique_nodes.append(row['Destination_airport_name'])
     else:
         relevant_routes = df[df.Equipment.isin(src)]
+        relevant_routes = relevant_routes.head(15)
 
         for irow, row in relevant_routes.iterrows():
             if (row['Destination_airport_name'] not in unique_nodes):
@@ -56,17 +57,19 @@ def create_edges(df, source, region_view=True):
     if region_view:
         relevant_routes = df[df.Source_airport_name.isin(source)]
     else:
-        relevant_routes = df[df.Equipment.isin(source)]
+        relevant_routes = df[df.Equipment.isin(source)].head(15)
     edge_df = relevant_routes.groupby(by=['Source_airport_name', 'Destination_airport_name']).size().reset_index(name='counts')
+    edge_df = edge_df.sort_values("counts", ascending=False).head(10)
     edge_df['normalized_counts'] = edge_df['counts']/edge_df['counts'].abs().max()
+    #print(edge_df)
     edge_list = [{'data': {'source': str(s), 'target': str(d), 'weight': c}
                     } for s, d, c in zip(edge_df.Source_airport_name.tolist(), edge_df.Destination_airport_name.tolist(),
                                         edge_df.normalized_counts.tolist())]
     return edge_list
 
 
-airports = pd.read_csv('airports.csv')
-routes = pd.read_csv('routes.csv')
+airports = pd.read_csv('.\\data\\airports.csv')
+routes = pd.read_csv('.\\data\\routes.csv')
 
 airports.drop(columns=['IATA', 'ICAO', 'Altitude', 'Timezone', 'DST', 'Tz database time zone', 'Type', 'Source'], axis=1, inplace=True)
 routes.drop(columns=['Airline_ID', 'Codeshare', 'Stops'], axis=1, inplace=True)
@@ -101,12 +104,12 @@ style_list = [
         'background-color':'#dcdcdc',
         'border-color':'black',
         'border-width':'0.1px',
-        'font-size':'1.5px',
+        'font-size':'3px',
         'font-family':'system-ui',
         'opacity':0.9,
-        'width':'2px',
-        'height':'2px',
-        'min-zoomed-font-size':'5px',
+        'width':'3px',
+        'height':'3px',
+        'min-zoomed-font-size':'1px',
         'text-wrap' : 'wrap',
         'overlay-padding':'0.1',
         }
@@ -119,7 +122,7 @@ style_list = [
         'target-endpoint':'outside-to-node-or-label',
         'arrow-scale':0.5,
         'curve-style':'bezier',
-        'opacity':0.3,
+        'opacity':0.9,
         'line-color':'navy',
         'line-cap':'butt',
         'label':'data(label)',
@@ -213,12 +216,17 @@ def displaySelectedNodeData(value):
     if value is not None:
         nodes = create_nodes(routes,src,region_view=True)
         edges = create_edges(routes,src)
-        elements_list.extend(nodes)
+        nodes_ = [[i['data']['source'] for i in edges][0]]+[i['data']['target'] for i in edges]
+        #print(edges)
+        nodes_ = [i for i in nodes if i['data']['id'] in nodes_]
+        for i in nodes_:
+            i['data']['label']=i['data']['label'].split("(")[1].split(")")[0]
+        elements_list.extend(nodes_)
         elements_list.extend(edges)
 
     return cyto.Cytoscape(
         id='cytoscape-plot',
-        layout={'name':'preset'},
+        layout={'name':'concentric'},
         elements=elements_list,
         stylesheet=style_list,
         style={
@@ -236,12 +244,17 @@ def displaySelectedNodeData(value):
     if value is not None:
         nodes = create_nodes(routes,value,region_view=False)
         edges = create_edges(routes, value, region_view=False)
+        nodes_ = [[i['data']['source'] for i in edges][0]]+[i['data']['target'] for i in edges]
+        #print(edges)
+        nodes_ = [i for i in nodes if i['data']['id'] in nodes_]
+        for i in nodes_:
+            i['data']['label']=i['data']['label'].split("(")[1].split(")")[0]
         elements_list.extend(nodes)
         elements_list.extend(edges)
    
     return cyto.Cytoscape(
         id='cytoscape-plot',
-        layout={'name':'preset'},
+        layout={'name':'concentric'},
         elements=elements_list,
         stylesheet=style_list,
         style={
