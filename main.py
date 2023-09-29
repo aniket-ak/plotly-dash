@@ -68,8 +68,8 @@ def create_edges(df, source, region_view=True):
     return edge_list
 
 
-airports = pd.read_csv('.\\data\\airports.csv')
-routes = pd.read_csv('.\\data\\routes.csv')
+airports = pd.read_csv('/Users/aniket/Documents/pycon/plotly-dash/data/airports.csv')
+routes = pd.read_csv('/Users/aniket/Documents/pycon/plotly-dash/data/routes.csv')
 
 airports.drop(columns=['IATA', 'ICAO', 'Altitude', 'Timezone', 'DST', 'Tz database time zone', 'Type', 'Source'], axis=1, inplace=True)
 routes.drop(columns=['Airline_ID', 'Codeshare', 'Stops'], axis=1, inplace=True)
@@ -148,7 +148,7 @@ style_list = [
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
 
-unique_countires = routes['Source_airport_country'].append(routes['Destination_airport_country']).unique().tolist()
+unique_countires = routes['Source_airport_country'].tolist() + (routes['Destination_airport_country']).unique().tolist()
 unique_countires.sort()
 unique_equipments = [str(i) for i in routes['Equipment'].unique().tolist()]
 unique_equipments.sort()
